@@ -152,7 +152,7 @@
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Modo Oscuro</button>
 
     <div class="header">
-        <p class="logo">SENA 3312447- ADSO 2026</p>
+        <p class="logo">SENA 3312447 - ADSO 2026</p>
         <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 5px 0;">Gestión de Limpieza del Ambiente</p>
     </div>
 
@@ -177,20 +177,21 @@
         <input type="email" id="email" class="input-text" placeholder="Correo electrónico">
         <input type="password" id="pass" class="input-text" placeholder="Contraseña">
         <button class="btn" onclick="login()">Entrar al Panel</button>
+        <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">La sesión se cerrará al cerrar la pestaña.</p>
     </div>
 
     <div id="adminPanel" class="admin-panel">
         <p style="margin-top: 0; color: #ffb74d;"><b>🔓 MODO ADMINISTRADOR</b></p>
         <button class="btn" onclick="saltarTurno()">MARCAR COMO REALIZADO</button>
         <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR TODO EL SISTEMA</button>
-        <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
+        <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión Ahora</button>
     </div>
 
     <div id="status" class="auth-status">Estado: Invitado</div>
 </div>
 
 <script>
-    // Configuración Firebase
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyCsPnOjs3A8-7M8W75HyWwdHvgHTLlfhQA",
         authDomain: "aseo-adso.firebaseapp.com",
@@ -207,7 +208,7 @@
 
     const APRENDICES = ["OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"];
 
-    // Reloj
+    // --- RELOJ ---
     function actualizarReloj() {
         const ahora = new Date();
         const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short' };
@@ -217,7 +218,7 @@
     }
     setInterval(actualizarReloj, 1000);
 
-    // Temas
+    // --- TEMAS ---
     function toggleTheme() {
         const body = document.body;
         const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -230,45 +231,63 @@
         document.getElementById('themeBtn').innerText = '☀️ Modo Claro';
     }
 
-    // Sesión
+    // --- SEGURIDAD: PERSISTENCIA DE SESIÓN ---
+    // Esto hace que al cerrar la pestaña se cierre la cuenta automáticamente
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+
     auth.onAuthStateChanged((user) => {
-        document.getElementById('loginForm').style.display = user ? 'none' : 'block';
-        document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
-        document.getElementById('status').innerText = user ? "Monitor: " + user.email : "Estado: Invitado (Solo lectura)";
+        const loginForm = document.getElementById('loginForm');
+        const adminPanel = document.getElementById('adminPanel');
+        const status = document.getElementById('status');
+        if (user) {
+            loginForm.style.display = 'none';
+            adminPanel.style.display = 'block';
+            status.innerText = "Monitor: " + user.email;
+        } else {
+            loginForm.style.display = 'block';
+            adminPanel.style.display = 'none';
+            status.innerText = "Estado: Invitado (Solo lectura)";
+        }
     });
 
     function login() {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
-        auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error: " + e.message));
+        if(!email || !pass) return alert("Por favor, ingresa tus credenciales.");
+        
+        auth.signInWithEmailAndPassword(email, pass).catch(e => {
+            alert("Error de acceso: " + e.message);
+        });
     }
-    function logout() { auth.signOut(); }
 
-    // Datos en tiempo real
+    function logout() {
+        if(confirm("¿Cerrar sesión de monitor?")) auth.signOut();
+    }
+
+    // --- DATOS ---
     db.ref('control_aseo').on('value', (snap) => {
         const data = snap.val() || { index: 0, historial: {} };
         document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
         document.getElementById('p2').innerText = APRENDICES[(data.index + 1) % APRENDICES.length];
         const list = document.getElementById('listaHistorial');
         list.innerHTML = "";
-        const historialEntries = Object.values(data.historial || {});
-        if(historialEntries.length === 0) {
+        const entries = Object.values(data.historial || {});
+        if(entries.length === 0) {
             list.innerHTML = "<p style='padding:10px; color:gray; font-size:0.8rem;'>Sin historial.</p>";
         } else {
-            historialEntries.reverse().forEach(item => {
+            entries.reverse().forEach(item => {
                 list.innerHTML += `<div class="historial-item">✅ <b>${item.fecha}:</b> ${item.encargados}</div>`;
             });
         }
     });
 
-    // --- FUNCIONES CON CONFIRMACIÓN ---
+    // --- ACCIONES PROTEGIDAS CON CONFIRMACIÓN ---
 
     function saltarTurno() {
-        // Obtenemos los nombres actuales para mostrarlos en la confirmación
         const p1 = document.getElementById('p1').innerText;
         const p2 = document.getElementById('p2').innerText;
 
-        const confirmar = confirm(`¿Confirmas que ${p1} y ${p2} realizaron el aseo hoy?\n\nEsta acción avanzará la lista a los siguientes aprendices.`);
+        const confirmar = confirm(`¿Confirmas que ${p1} y ${p2} realizaron el aseo?\n\nAl aceptar, se guardará el registro y la lista avanzará.`);
 
         if (confirmar) {
             db.ref('control_aseo').once('value', (snap) => {
@@ -278,22 +297,18 @@
                     fecha: new Date().toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'}),
                     encargados: `${p1} Y ${p2}`
                 });
-                alert("Turno registrado exitosamente.");
+                alert("Registro completado.");
             });
-        } else {
-            console.log("Acción cancelada por el usuario.");
         }
     }
 
     function resetearTodo() {
-        const primeraConfirmacion = confirm("⚠️ ¡ADVERTENCIA CRÍTICA!\n\n¿Estás seguro de que quieres borrar TODO el historial y reiniciar el ciclo desde el primer aprendiz?\n\nEsta acción NO se puede deshacer.");
-
-        if (primeraConfirmacion) {
-            const segundaConfirmacion = confirm("❓ ¿REALMENTE ESTÁS SEGURO?\n\nPresiona Aceptar para formatear el sistema de aseo o Cancelar para abortar.");
-            
-            if (segundaConfirmacion) {
+        const warning = confirm("⚠️ ¡ATENCIÓN!\n\nEstás a punto de borrar todo el historial y reiniciar la lista de aprendices.\n\n¿Deseas continuar?");
+        if (warning) {
+            const finalCheck = confirm("❓ ¿Estás TOTALMENTE seguro?\n\nEsta acción es irreversible.");
+            if (finalCheck) {
                 db.ref('control_aseo').set({ index: 0, historial: {} })
-                .then(() => alert("Sistema reseteado correctamente."))
+                .then(() => alert("Sistema reiniciado a valores iniciales."))
                 .catch(e => alert("Error: " + e.message));
             }
         }
