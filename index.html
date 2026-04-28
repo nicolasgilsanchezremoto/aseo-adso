@@ -45,7 +45,7 @@
             max-width: 500px; 
             margin: auto; 
             background: var(--bg-card); 
-            padding: 25px; 
+            padding: 30px 25px; 
             border-radius: 20px; 
             box-shadow: 0 10px 30px var(--shadow); 
             text-align: center; 
@@ -64,10 +64,19 @@
             border-radius: 50px;
             font-size: 0.75rem;
             font-weight: bold;
+            z-index: 10;
         }
 
-        .header { border-bottom: 3px solid var(--sena); margin-bottom: 20px; padding-bottom: 10px; }
-        .logo { color: var(--sena); font-weight: bold; font-size: 1.3rem; margin: 0; }
+        .header { 
+            border-bottom: 3px solid var(--sena); 
+            margin-bottom: 20px; 
+            padding-bottom: 15px;
+            padding-top: 10px;
+        }
+        
+        .logo-top { color: var(--sena); font-weight: bold; font-size: 1.6rem; margin: 0; line-height: 1.2; }
+        .logo-bottom { color: var(--sena); font-weight: bold; font-size: 1.4rem; margin: 5px 0 0 0; line-height: 1.2; }
+        .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin: 10px 0 0 0; font-weight: 400; }
 
         .time-box {
             display: flex;
@@ -152,9 +161,9 @@
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Modo Oscuro</button>
 
     <div class="header">
-        <p class="logo">SENA 3312447
-            ADSO 2026-2028</p>
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 5px 0;">Gestión de Limpieza del Ambiente</p>
+        <p class="logo-top">SENA 3312447</p>
+        <p class="logo-bottom">ADSO 2026-2028</p>
+        <p class="subtitle">Gestión de Limpieza del Ambiente</p>
     </div>
 
     <div class="time-box">
@@ -209,7 +218,6 @@
 
     const APRENDICES = ["OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"];
 
-    // --- RELOJ ---
     function actualizarReloj() {
         const ahora = new Date();
         const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short' };
@@ -219,7 +227,6 @@
     }
     setInterval(actualizarReloj, 1000);
 
-    // --- TEMAS ---
     function toggleTheme() {
         const body = document.body;
         const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -232,8 +239,6 @@
         document.getElementById('themeBtn').innerText = '☀️ Modo Claro';
     }
 
-    // --- SEGURIDAD: PERSISTENCIA DE SESIÓN ---
-    // Esto hace que al cerrar la pestaña se cierre la cuenta automáticamente
     auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
     auth.onAuthStateChanged((user) => {
@@ -255,17 +260,13 @@
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
         if(!email || !pass) return alert("Por favor, ingresa tus credenciales.");
-        
-        auth.signInWithEmailAndPassword(email, pass).catch(e => {
-            alert("Error de acceso: " + e.message);
-        });
+        auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error de acceso: " + e.message));
     }
 
     function logout() {
         if(confirm("¿Cerrar sesión de monitor?")) auth.signOut();
     }
 
-    // --- DATOS ---
     db.ref('control_aseo').on('value', (snap) => {
         const data = snap.val() || { index: 0, historial: {} };
         document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
@@ -282,14 +283,10 @@
         }
     });
 
-    // --- ACCIONES PROTEGIDAS CON CONFIRMACIÓN ---
-
     function saltarTurno() {
         const p1 = document.getElementById('p1').innerText;
         const p2 = document.getElementById('p2').innerText;
-
         const confirmar = confirm(`¿Confirmas que ${p1} y ${p2} realizaron el aseo?\n\nAl aceptar, se guardará el registro y la lista avanzará.`);
-
         if (confirmar) {
             db.ref('control_aseo').once('value', (snap) => {
                 let idx = snap.val()?.index || 0;
