@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aseo ADSO - Pro</title>
+    <title>Aseo ADSO - Seguridad Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
@@ -13,7 +13,6 @@
             --sena: #39A900;
             --dark-blue: #00324D;
             --danger: #d32f2f;
-            /* Colores Modo Claro */
             --bg-body: #f4f7f6;
             --bg-card: #ffffff;
             --text-main: #333333;
@@ -24,7 +23,6 @@
         }
 
         [data-theme="dark"] {
-            /* Colores Modo Oscuro */
             --bg-body: #121212;
             --bg-card: #1e1e1e;
             --text-main: #e0e0e0;
@@ -64,7 +62,7 @@
             border: none;
             padding: 8px 12px;
             border-radius: 50px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
         }
 
@@ -133,6 +131,7 @@
             font-weight: bold; 
             transition: 0.3s; 
         }
+        .btn:hover { opacity: 0.9; transform: scale(1.01); }
         .btn-danger { background: var(--danger); font-size: 0.75rem; }
         .input-text { 
             width: 90%; 
@@ -183,7 +182,7 @@
     <div id="adminPanel" class="admin-panel">
         <p style="margin-top: 0; color: #ffb74d;"><b>🔓 MODO ADMINISTRADOR</b></p>
         <button class="btn" onclick="saltarTurno()">MARCAR COMO REALIZADO</button>
-        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR SISTEMA HISTORIAL Y EL CICLO</button>
+        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR TODO EL SISTEMA</button>
         <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
     </div>
 
@@ -191,7 +190,7 @@
 </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
+    // Configuración Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCsPnOjs3A8-7M8W75HyWwdHvgHTLlfhQA",
         authDomain: "aseo-adso.firebaseapp.com",
@@ -208,66 +207,48 @@
 
     const APRENDICES = ["OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"];
 
-    // --- RELOJ EN VIVO (COLOMBIA) ---
+    // Reloj
     function actualizarReloj() {
         const ahora = new Date();
         const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short' };
         const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        
         document.getElementById('fechaActual').innerText = ahora.toLocaleDateString('es-CO', opcionesFecha).toUpperCase();
         document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-CO', opcionesHora);
     }
     setInterval(actualizarReloj, 1000);
 
-    // --- MODO OSCURO ---
+    // Temas
     function toggleTheme() {
         const body = document.body;
-        const currentTheme = body.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+        const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         body.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         document.getElementById('themeBtn').innerText = newTheme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
     }
-
-    // Cargar tema guardado
     if(localStorage.getItem('theme') === 'dark') {
         document.body.setAttribute('data-theme', 'dark');
         document.getElementById('themeBtn').innerText = '☀️ Modo Claro';
     }
 
-    // --- GESTIÓN DE SESIÓN ---
+    // Sesión
     auth.onAuthStateChanged((user) => {
-        const loginForm = document.getElementById('loginForm');
-        const adminPanel = document.getElementById('adminPanel');
-        const status = document.getElementById('status');
-
-        if (user) {
-            loginForm.style.display = 'none';
-            adminPanel.style.display = 'block';
-            status.innerText = "Monitor: " + user.email;
-        } else {
-            loginForm.style.display = 'block';
-            adminPanel.style.display = 'none';
-            status.innerText = "Estado: Invitado (Solo lectura)";
-        }
+        document.getElementById('loginForm').style.display = user ? 'none' : 'block';
+        document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
+        document.getElementById('status').innerText = user ? "Monitor: " + user.email : "Estado: Invitado (Solo lectura)";
     });
 
     function login() {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
-        if(!email || !pass) return alert("Completa los campos");
         auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error: " + e.message));
     }
-
     function logout() { auth.signOut(); }
 
-    // --- LÓGICA DE DATOS ---
+    // Datos en tiempo real
     db.ref('control_aseo').on('value', (snap) => {
         const data = snap.val() || { index: 0, historial: {} };
         document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
         document.getElementById('p2').innerText = APRENDICES[(data.index + 1) % APRENDICES.length];
-        
         const list = document.getElementById('listaHistorial');
         list.innerHTML = "";
         const historialEntries = Object.values(data.historial || {});
@@ -280,24 +261,41 @@
         }
     });
 
+    // --- FUNCIONES CON CONFIRMACIÓN ---
+
     function saltarTurno() {
-        db.ref('control_aseo').once('value', (snap) => {
-            let idx = snap.val()?.index || 0;
-            let p1 = APRENDICES[idx % APRENDICES.length];
-            let p2 = APRENDICES[(idx + 1) % APRENDICES.length];
-            
-            db.ref('control_aseo/index').set((idx + 2) % APRENDICES.length);
-            db.ref('control_aseo/historial').push({
-                fecha: new Date().toLocaleDateString('es-CO'),
-                encargados: `${p1} Y ${p2}`
+        // Obtenemos los nombres actuales para mostrarlos en la confirmación
+        const p1 = document.getElementById('p1').innerText;
+        const p2 = document.getElementById('p2').innerText;
+
+        const confirmar = confirm(`¿Confirmas que ${p1} y ${p2} realizaron el aseo hoy?\n\nEsta acción avanzará la lista a los siguientes aprendices.`);
+
+        if (confirmar) {
+            db.ref('control_aseo').once('value', (snap) => {
+                let idx = snap.val()?.index || 0;
+                db.ref('control_aseo/index').set((idx + 2) % APRENDICES.length);
+                db.ref('control_aseo/historial').push({
+                    fecha: new Date().toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'}),
+                    encargados: `${p1} Y ${p2}`
+                });
+                alert("Turno registrado exitosamente.");
             });
-            alert("Turno realizado.");
-        });
+        } else {
+            console.log("Acción cancelada por el usuario.");
+        }
     }
 
     function resetearTodo() {
-        if (confirm("¿Resetear todo a cero?")) {
-            db.ref('control_aseo').set({ index: 0, historial: {} });
+        const primeraConfirmacion = confirm("⚠️ ¡ADVERTENCIA CRÍTICA!\n\n¿Estás seguro de que quieres borrar TODO el historial y reiniciar el ciclo desde el primer aprendiz?\n\nEsta acción NO se puede deshacer.");
+
+        if (primeraConfirmacion) {
+            const segundaConfirmacion = confirm("❓ ¿REALMENTE ESTÁS SEGURO?\n\nPresiona Aceptar para formatear el sistema de aseo o Cancelar para abortar.");
+            
+            if (segundaConfirmacion) {
+                db.ref('control_aseo').set({ index: 0, historial: {} })
+                .then(() => alert("Sistema reseteado correctamente."))
+                .catch(e => alert("Error: " + e.message));
+            }
         }
     }
 </script>
