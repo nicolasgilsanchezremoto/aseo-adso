@@ -3,39 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aseo ADSO - Seguridad Pro</title>
+    <title>Aseo ADSO - Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     
     <style>
-        :root { --sena: #39A900; --dark: #00324D; --gray: #f4f7f6; --danger: #d32f2f; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--gray); margin: 0; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        :root {
+            --sena: #39A900;
+            --dark-blue: #00324D;
+            --danger: #d32f2f;
+            /* Colores Modo Claro */
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border: #dddddd;
+            --bg-input: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Colores Modo Oscuro */
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-secondary: #aaaaaa;
+            --border: #333333;
+            --bg-input: #2d2d2d;
+            --shadow: rgba(0, 0, 0, 0.5);
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main);
+            margin: 0; 
+            padding: 20px; 
+            transition: all 0.3s ease;
+        }
+
+        .container { 
+            max-width: 500px; 
+            margin: auto; 
+            background: var(--bg-card); 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px var(--shadow); 
+            text-align: center; 
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            background: var(--sena);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
         .header { border-bottom: 3px solid var(--sena); margin-bottom: 20px; padding-bottom: 10px; }
-        .logo { color: var(--sena); font-weight: bold; font-size: 1.5rem; margin: 0; }
+        .logo { color: var(--sena); font-weight: bold; font-size: 1.3rem; margin: 0; }
+
+        .time-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--dark-blue);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
         .turno-hoy { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
-        .aprendiz-card { background: var(--sena); color: white; padding: 20px; border-radius: 10px; flex: 1; font-weight: bold; text-transform: uppercase; min-height: 50px; display: flex; align-items: center; justify-content: center; }
-        .historial { margin-top: 25px; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; text-align: left; }
-        .historial-header { background: var(--dark); color: white; padding: 8px 12px; font-size: 0.8rem; position: sticky; top: 0; }
-        .historial-item { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 0.8rem; }
-        .admin-panel { margin-top: 25px; padding: 15px; background: #fff3e0; border-radius: 8px; display: none; border: 2px solid #ffb74d; }
-        .btn { background: var(--dark); color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; transition: 0.3s; }
-        .btn:hover { opacity: 0.9; }
-        .btn-danger { background: var(--danger); margin-top: 20px; font-size: 0.8rem; }
-        .input-text { width: 90%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 5px; text-align: center; }
-        .auth-status { font-size: 0.75rem; margin-top: 15px; color: #666; font-style: italic; }
+        .aprendiz-card { 
+            background: var(--sena); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            flex: 1; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            min-height: 50px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 4px 10px rgba(57, 169, 0, 0.3);
+        }
+
+        .historial { 
+            margin-top: 25px; 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            max-height: 250px; 
+            overflow-y: auto; 
+            text-align: left; 
+            background: var(--bg-input);
+        }
+        .historial-header { background: var(--dark-blue); color: white; padding: 10px; font-size: 0.8rem; position: sticky; top: 0; z-index: 10; }
+        .historial-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-main); }
+
+        .admin-panel { 
+            margin-top: 25px; 
+            padding: 15px; 
+            background: rgba(255, 183, 77, 0.1); 
+            border-radius: 12px; 
+            display: none; 
+            border: 2px solid #ffb74d; 
+        }
+
+        .btn { 
+            background: var(--dark-blue); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            margin-top: 10px; 
+            font-weight: bold; 
+            transition: 0.3s; 
+        }
+        .btn-danger { background: var(--danger); font-size: 0.75rem; }
+        .input-text { 
+            width: 90%; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            text-align: center; 
+            background: var(--bg-input); 
+            color: var(--text-main);
+        }
+        .auth-status { font-size: 0.75rem; margin-top: 15px; color: var(--text-secondary); font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Modo Oscuro</button>
+
     <div class="header">
-        <p class="logo">SENA 3312447- ADSO 2026-2028</p>
-        <p style="font-size: 0.8rem; color: #666;">Sistema de Gestión de Aseo</p>
+        <p class="logo">SENA 3312447- ADSO 2026</p>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 5px 0;">Gestión de Limpieza del Ambiente</p>
     </div>
 
-    <div id="fechaHoy" style="font-weight: bold; text-transform: uppercase; margin-bottom: 15px; color: var(--dark);"></div>
+    <div class="time-box">
+        <span id="fechaActual">Cargando...</span>
+        <span id="reloj">00:00:00</span>
+    </div>
 
     <p style="margin-bottom: 5px;"><b>HOY LE TOCA A:</b></p>
     <div class="turno-hoy">
@@ -45,32 +170,28 @@
 
     <div class="historial">
         <div class="historial-header">📋 HISTORIAL DE CUMPLIMIENTO</div>
-        <div id="listaHistorial">
-            <div style="padding: 10px; color: #999; font-size: 0.8rem;">Cargando registros...</div>
-        </div>
+        <div id="listaHistorial"></div>
     </div>
 
-    <div id="loginForm" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
-        <p style="font-size: 0.8rem;"><b>Acceso de Monitores</b></p>
+    <div id="loginForm" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+        <p style="font-size: 0.8rem; color: var(--text-main);"><b>Acceso de Monitores</b></p>
         <input type="email" id="email" class="input-text" placeholder="Correo electrónico">
         <input type="password" id="pass" class="input-text" placeholder="Contraseña">
         <button class="btn" onclick="login()">Entrar al Panel</button>
     </div>
 
     <div id="adminPanel" class="admin-panel">
-        <p style="margin-top: 0;"><b>🔓 MODO ADMINISTRADOR</b></p>
+        <p style="margin-top: 0; color: #ffb74d;"><b>🔓 MODO ADMINISTRADOR</b></p>
         <button class="btn" onclick="saltarTurno()">MARCAR COMO REALIZADO</button>
-        
-        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR TODO EL SISTEMA, HISTORIAL Y EL CICLO</button>
-        
+        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR SISTEMA</button>
         <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
     </div>
 
-    <div id="status" class="auth-status">Estado: Invitado (Solo lectura)</div>
+    <div id="status" class="auth-status">Estado: Invitado</div>
 </div>
 
 <script>
-    // Configuración de tu proyecto Firebase
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyCsPnOjs3A8-7M8W75HyWwdHvgHTLlfhQA",
         authDomain: "aseo-adso.firebaseapp.com",
@@ -81,17 +202,39 @@
         appId: "1:490640568451:web:6983d250b50be427f22bb6"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    const APRENDICES = [
-        "OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", 
-        "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", 
-        "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", 
-        "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"
-    ];
+    const APRENDICES = ["OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"];
+
+    // --- RELOJ EN VIVO (COLOMBIA) ---
+    function actualizarReloj() {
+        const ahora = new Date();
+        const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short' };
+        const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+        
+        document.getElementById('fechaActual').innerText = ahora.toLocaleDateString('es-CO', opcionesFecha).toUpperCase();
+        document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-CO', opcionesHora);
+    }
+    setInterval(actualizarReloj, 1000);
+
+    // --- MODO OSCURO ---
+    function toggleTheme() {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        document.getElementById('themeBtn').innerText = newTheme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+    }
+
+    // Cargar tema guardado
+    if(localStorage.getItem('theme') === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').innerText = '☀️ Modo Claro';
+    }
 
     // --- GESTIÓN DE SESIÓN ---
     auth.onAuthStateChanged((user) => {
@@ -102,7 +245,7 @@
         if (user) {
             loginForm.style.display = 'none';
             adminPanel.style.display = 'block';
-            status.innerText = "Conectado como: " + user.email;
+            status.innerText = "Monitor: " + user.email;
         } else {
             loginForm.style.display = 'block';
             adminPanel.style.display = 'none';
@@ -113,75 +256,50 @@
     function login() {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('pass').value;
-        if(!email || !pass) return alert("Por favor completa los datos");
-        
-        auth.signInWithEmailAndPassword(email, pass)
-            .then(() => {
-                document.getElementById('email').value = "";
-                document.getElementById('pass').value = "";
-            })
-            .catch(error => alert("Acceso denegado: " + error.message));
+        if(!email || !pass) return alert("Completa los campos");
+        auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error: " + e.message));
     }
 
-    function logout() {
-        auth.signOut();
-    }
+    function logout() { auth.signOut(); }
 
     // --- LÓGICA DE DATOS ---
-    db.ref('control_aseo').on('value', (snapshot) => {
-        const data = snapshot.val() || { index: 0, historial: {} };
-        
-        // Actualizar nombres en pantalla
+    db.ref('control_aseo').on('value', (snap) => {
+        const data = snap.val() || { index: 0, historial: {} };
         document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
         document.getElementById('p2').innerText = APRENDICES[(data.index + 1) % APRENDICES.length];
         
-        // Actualizar Historial
-        const histDiv = document.getElementById('listaHistorial');
-        histDiv.innerHTML = "";
-        
-        if (data.historial && Object.keys(data.historial).length > 0) {
-            Object.values(data.historial).reverse().forEach(item => {
-                histDiv.innerHTML += `<div class="historial-item">✅ <b>${item.fecha}:</b> ${item.encargados}</div>`;
-            });
+        const list = document.getElementById('listaHistorial');
+        list.innerHTML = "";
+        const historialEntries = Object.values(data.historial || {});
+        if(historialEntries.length === 0) {
+            list.innerHTML = "<p style='padding:10px; color:gray; font-size:0.8rem;'>Sin historial.</p>";
         } else {
-            histDiv.innerHTML = `<div style="padding: 15px; color: #999; font-size: 0.8rem; text-align: center;">No hay historial registrado.</div>`;
+            historialEntries.reverse().forEach(item => {
+                list.innerHTML += `<div class="historial-item">✅ <b>${item.fecha}:</b> ${item.encargados}</div>`;
+            });
         }
     });
 
     function saltarTurno() {
-        db.ref('control_aseo').once('value', (snapshot) => {
-            let data = snapshot.val() || { index: 0 };
-            let p1 = APRENDICES[data.index % APRENDICES.length];
-            let p2 = APRENDICES[(data.index + 1) % APRENDICES.length];
+        db.ref('control_aseo').once('value', (snap) => {
+            let idx = snap.val()?.index || 0;
+            let p1 = APRENDICES[idx % APRENDICES.length];
+            let p2 = APRENDICES[(idx + 1) % APRENDICES.length];
             
-            // Avanzar 2 puestos
-            db.ref('control_aseo/index').set((data.index + 2) % APRENDICES.length);
-            
-            // Guardar en historial
+            db.ref('control_aseo/index').set((idx + 2) % APRENDICES.length);
             db.ref('control_aseo/historial').push({
-                fecha: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                fecha: new Date().toLocaleDateString('es-CO'),
                 encargados: `${p1} Y ${p2}`
             });
-            
-            alert("Turno actualizado e historial guardado.");
+            alert("Turno realizado.");
         });
     }
 
     function resetearTodo() {
-        const confirmacion = confirm("¿ESTÁS SEGURO? Esta acción borrará TODO el historial y regresará el ciclo al inicio (Oscar Suarez y Nicolas Gil).");
-        
-        if (confirmacion) {
-            db.ref('control_aseo').set({
-                index: 0,
-                historial: {}
-            })
-            .then(() => alert("Sistema reseteado a cero."))
-            .catch(error => alert("Error al resetear: " + error.message));
+        if (confirm("¿Resetear todo a cero?")) {
+            db.ref('control_aseo').set({ index: 0, historial: {} });
         }
     }
-
-    // Fecha actual
-    document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 </script>
 </body>
 </html>
