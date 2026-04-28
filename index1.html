@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aseo ADSO - Seguridad Pro</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        :root { --sena: #39A900; --dark: #00324D; --gray: #f4f7f6; --danger: #d32f2f; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gray); margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .header { border-bottom: 3px solid var(--sena); margin-bottom: 20px; padding-bottom: 10px; }
+        .logo { color: var(--sena); font-weight: bold; font-size: 1.5rem; margin: 0; }
+        .turno-hoy { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .aprendiz-card { background: var(--sena); color: white; padding: 20px; border-radius: 10px; flex: 1; font-weight: bold; text-transform: uppercase; min-height: 50px; display: flex; align-items: center; justify-content: center; }
+        .historial { margin-top: 25px; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; text-align: left; }
+        .historial-header { background: var(--dark); color: white; padding: 8px 12px; font-size: 0.8rem; position: sticky; top: 0; }
+        .historial-item { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        .admin-panel { margin-top: 25px; padding: 15px; background: #fff3e0; border-radius: 8px; display: none; border: 2px solid #ffb74d; }
+        .btn { background: var(--dark); color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); margin-top: 20px; font-size: 0.8rem; }
+        .input-text { width: 90%; padding: 10px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 5px; text-align: center; }
+        .auth-status { font-size: 0.75rem; margin-top: 15px; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <p class="logo">SENA 3312447- ADSO 2026-2028</p>
+        <p style="font-size: 0.8rem; color: #666;">Sistema de Gestión de Aseo</p>
+    </div>
+
+    <div id="fechaHoy" style="font-weight: bold; text-transform: uppercase; margin-bottom: 15px; color: var(--dark);"></div>
+
+    <p style="margin-bottom: 5px;"><b>HOY LE TOCA A:</b></p>
+    <div class="turno-hoy">
+        <div id="p1" class="aprendiz-card">---</div>
+        <div id="p2" class="aprendiz-card">---</div>
+    </div>
+
+    <div class="historial">
+        <div class="historial-header">📋 HISTORIAL DE CUMPLIMIENTO</div>
+        <div id="listaHistorial">
+            <div style="padding: 10px; color: #999; font-size: 0.8rem;">Cargando registros...</div>
+        </div>
+    </div>
+
+    <div id="loginForm" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <p style="font-size: 0.8rem;"><b>Acceso Monitor / Instructor</b></p>
+        <input type="email" id="email" class="input-text" placeholder="Correo electrónico">
+        <input type="password" id="pass" class="input-text" placeholder="Contraseña">
+        <button class="btn" onclick="login()">Entrar al Panel</button>
+    </div>
+
+    <div id="adminPanel" class="admin-panel">
+        <p style="margin-top: 0;"><b>🔓 MODO ADMINISTRADOR</b></p>
+        <button class="btn" onclick="saltarTurno()">MARCAR COMO REALIZADO / SALTAR DÍA</button>
+        
+        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR TODO EL SISTEMA, HISTORIAL Y EL CICLO</button>
+        
+        <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
+    </div>
+
+    <div id="status" class="auth-status">Estado: Invitado (Solo lectura)</div>
+</div>
+
+<script>
+    // Configuración de tu proyecto Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsPnOjs3A8-7M8W75HyWwdHvgHTLlfhQA",
+        authDomain: "aseo-adso.firebaseapp.com",
+        databaseURL: "https://aseo-adso-default-rtdb.firebaseio.com",
+        projectId: "aseo-adso",
+        storageBucket: "aseo-adso.firebasestorage.app",
+        messagingSenderId: "490640568451",
+        appId: "1:490640568451:web:6983d250b50be427f22bb6"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    const APRENDICES = [
+        "OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", 
+        "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", 
+        "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", 
+        "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"
+    ];
+
+    // --- GESTIÓN DE SESIÓN ---
+    auth.onAuthStateChanged((user) => {
+        const loginForm = document.getElementById('loginForm');
+        const adminPanel = document.getElementById('adminPanel');
+        const status = document.getElementById('status');
+
+        if (user) {
+            loginForm.style.display = 'none';
+            adminPanel.style.display = 'block';
+            status.innerText = "Conectado como: " + user.email;
+        } else {
+            loginForm.style.display = 'block';
+            adminPanel.style.display = 'none';
+            status.innerText = "Estado: Invitado (Solo lectura)";
+        }
+    });
+
+    function login() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
+        if(!email || !pass) return alert("Por favor completa los datos");
+        
+        auth.signInWithEmailAndPassword(email, pass)
+            .then(() => {
+                document.getElementById('email').value = "";
+                document.getElementById('pass').value = "";
+            })
+            .catch(error => alert("Acceso denegado: " + error.message));
+    }
+
+    function logout() {
+        auth.signOut();
+    }
+
+    // --- LÓGICA DE DATOS ---
+    db.ref('control_aseo').on('value', (snapshot) => {
+        const data = snapshot.val() || { index: 0, historial: {} };
+        
+        // Actualizar nombres en pantalla
+        document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
+        document.getElementById('p2').innerText = APRENDICES[(data.index + 1) % APRENDICES.length];
+        
+        // Actualizar Historial
+        const histDiv = document.getElementById('listaHistorial');
+        histDiv.innerHTML = "";
+        
+        if (data.historial && Object.keys(data.historial).length > 0) {
+            Object.values(data.historial).reverse().forEach(item => {
+                histDiv.innerHTML += `<div class="historial-item">✅ <b>${item.fecha}:</b> ${item.encargados}</div>`;
+            });
+        } else {
+            histDiv.innerHTML = `<div style="padding: 15px; color: #999; font-size: 0.8rem; text-align: center;">No hay historial registrado.</div>`;
+        }
+    });
+
+    function saltarTurno() {
+        db.ref('control_aseo').once('value', (snapshot) => {
+            let data = snapshot.val() || { index: 0 };
+            let p1 = APRENDICES[data.index % APRENDICES.length];
+            let p2 = APRENDICES[(data.index + 1) % APRENDICES.length];
+            
+            // Avanzar 2 puestos
+            db.ref('control_aseo/index').set((data.index + 2) % APRENDICES.length);
+            
+            // Guardar en historial
+            db.ref('control_aseo/historial').push({
+                fecha: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+                encargados: `${p1} Y ${p2}`
+            });
+            
+            alert("Turno actualizado e historial guardado.");
+        });
+    }
+
+    function resetearTodo() {
+        const confirmacion = confirm("¿ESTÁS SEGURO? Esta acción borrará TODO el historial y regresará el ciclo al inicio (Oscar Suarez y Nicolas Gil).");
+        
+        if (confirmacion) {
+            db.ref('control_aseo').set({
+                index: 0,
+                historial: {}
+            })
+            .then(() => alert("Sistema reseteado a cero."))
+            .catch(error => alert("Error al resetear: " + error.message));
+        }
+    }
+
+    // Fecha actual
+    document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+</script>
+</body>
+</html>
