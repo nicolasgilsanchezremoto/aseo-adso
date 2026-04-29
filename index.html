@@ -3,205 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aseo ADSO - Seguridad Pro</title>
+    <title>Aseo ADSO Pro - Gestión Dinámica</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     
     <style>
         :root {
-            --sena: #39A900;
-            --dark-blue: #00324D;
-            --danger: #d32f2f;
-            --bg-body: #f4f7f6;
-            --bg-card: #ffffff;
-            --text-main: #333333;
-            --text-secondary: #666666;
-            --border: #dddddd;
-            --bg-input: #ffffff;
-            --shadow: rgba(0, 0, 0, 0.1);
+            --sena: #39A900; --dark-blue: #00324D; --danger: #d32f2f;
+            --bg-body: #f4f7f6; --bg-card: #ffffff; --text-main: #333;
+            --text-secondary: #666; --border: #dddddd;
         }
 
         [data-theme="dark"] {
-            --bg-body: #121212;
-            --bg-card: #1e1e1e;
-            --text-main: #e0e0e0;
-            --text-secondary: #aaaaaa;
-            --border: #333333;
-            --bg-input: #2d2d2d;
-            --shadow: rgba(0, 0, 0, 0.5);
+            --bg-body: #121212; --bg-card: #1e1e1e; --text-main: #e0e0e0;
+            --text-secondary: #aaa; --border: #333;
         }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-body); 
-            color: var(--text-main);
-            margin: 0; 
-            padding: 20px; 
-            transition: all 0.3s ease;
-        }
-
-        .container { 
-            max-width: 500px; 
-            margin: auto; 
-            background: var(--bg-card); 
-            padding: 30px 25px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px var(--shadow); 
-            text-align: center; 
-            position: relative;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            cursor: pointer;
-            background: var(--sena);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            z-index: 10;
-        }
-
-        .header { 
-            border-bottom: 3px solid var(--sena); 
-            margin-bottom: 20px; 
-            padding-bottom: 15px;
-            padding-top: 10px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 10px; transition: 0.3s; }
+        .container { max-width: 600px; margin: auto; background: var(--bg-card); padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
         
-        .logo-top { color: var(--sena); font-weight: bold; font-size: 1.6rem; margin: 0; line-height: 1.2; }
-        .logo-bottom { color: var(--sena); font-weight: bold; font-size: 1.4rem; margin: 5px 0 0 0; line-height: 1.2; }
-        .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin: 10px 0 0 0; font-weight: 400; }
+        .header { border-bottom: 3px solid var(--sena); margin-bottom: 15px; padding-bottom: 10px; }
+        .logo-top { color: var(--sena); font-weight: bold; font-size: 1.4rem; margin: 0; }
+        
+        .time-box { display: flex; justify-content: space-between; background: var(--dark-blue); color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.8rem; }
+        
+        .aprendiz-card { background: var(--sena); color: white; padding: 15px; border-radius: 12px; flex: 1; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; }
+        .turno-container { display: flex; gap: 10px; margin: 15px 0; }
 
-        .time-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--dark-blue);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
+        .section-title { text-align: left; font-size: 0.9rem; font-weight: bold; border-left: 4px solid var(--sena); padding-left: 10px; margin: 20px 0 10px; }
+        
+        .table-container { background: var(--bg-body); border-radius: 10px; max-height: 150px; overflow-y: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: var(--dark-blue); color: white; padding: 8px; position: sticky; top: 0; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); text-align: left; }
 
-        .turno-hoy { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
-        .aprendiz-card { 
-            background: var(--sena); 
-            color: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            flex: 1; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            min-height: 50px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 4px 10px rgba(57, 169, 0, 0.3);
-        }
-
-        .historial { 
-            margin-top: 25px; 
-            border: 1px solid var(--border); 
-            border-radius: 12px; 
-            max-height: 250px; 
-            overflow-y: auto; 
-            text-align: left; 
-            background: var(--bg-input);
-        }
-        .historial-header { background: var(--dark-blue); color: white; padding: 10px; font-size: 0.8rem; position: sticky; top: 0; z-index: 10; }
-        .historial-item { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-main); }
-
-        .admin-panel { 
-            margin-top: 25px; 
-            padding: 15px; 
-            background: rgba(255, 183, 77, 0.1); 
-            border-radius: 12px; 
-            display: none; 
-            border: 2px solid #ffb74d; 
-        }
-
-        .btn { 
-            background: var(--dark-blue); 
-            color: white; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            width: 100%; 
-            margin-top: 10px; 
-            font-weight: bold; 
-            transition: 0.3s; 
-        }
-        .btn:hover { opacity: 0.9; transform: scale(1.01); }
-        .btn-danger { background: var(--danger); font-size: 0.75rem; }
-        .input-text { 
-            width: 90%; 
-            padding: 10px; 
-            margin-bottom: 10px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            text-align: center; 
-            background: var(--bg-input); 
-            color: var(--text-main);
-        }
-        .auth-status { font-size: 0.75rem; margin-top: 15px; color: var(--text-secondary); font-style: italic; }
+        .admin-panel { background: rgba(255,183,77,0.1); border: 2px solid #ffb74d; padding: 15px; border-radius: 15px; display: none; margin-top: 20px; }
+        .btn { background: var(--dark-blue); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 8px; font-weight: bold; font-size: 0.8rem; }
+        .btn-danger { background: var(--danger); }
+        .btn-small { width: auto; padding: 5px 10px; font-size: 0.7rem; }
+        
+        .input-text { width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-main); }
+        .theme-toggle { cursor: pointer; background: var(--sena); color: white; border: none; padding: 5px 10px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Modo Oscuro</button>
-
+    
     <div class="header">
         <p class="logo-top">SENA 3312447</p>
-        <p class="logo-bottom">ADSO 2026-2028</p>
-        <p class="subtitle">Gestión de Limpieza del Ambiente</p>
+        <p style="color: var(--sena); font-weight: bold; margin:0;">ADSO 2026-2028</p>
     </div>
 
     <div class="time-box">
-        <span id="fechaActual">Cargando...</span>
+        <span id="fechaActual">---</span>
         <span id="reloj">00:00:00</span>
     </div>
 
-    <p style="margin-bottom: 5px;"><b>HOY LE TOCA A:</b></p>
-    <div class="turno-hoy">
+    <p style="font-size: 0.8rem; font-weight: bold;">PAREJA DE HOY:</p>
+    <div class="turno-container">
         <div id="p1" class="aprendiz-card">---</div>
         <div id="p2" class="aprendiz-card">---</div>
     </div>
 
-    <div class="historial">
-        <div class="historial-header">📋 HISTORIAL DE CUMPLIMIENTO</div>
-        <div id="listaHistorial"></div>
+    <div class="section-title">🔮 PROYECCIÓN (Siguientes en la lista)</div>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>Aprendiz</th><th>Estado</th></tr></thead>
+            <tbody id="tablaProyeccion"></tbody>
+        </table>
     </div>
 
-    <div id="loginForm" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
-        <p style="font-size: 0.8rem; color: var(--text-main);"><b>Acceso de Monitores</b></p>
-        <input type="email" id="email" class="input-text" placeholder="Correo electrónico">
+    <div class="section-title">📜 HISTORIAL DE CUMPLIMIENTO</div>
+    <div class="table-container">
+        <table id="tablaHistorial"></table>
+    </div>
+
+    <div id="loginForm" style="margin-top:20px; padding-top:10px; border-top: 1px solid var(--border);">
+        <input type="email" id="email" class="input-text" placeholder="Email Monitor">
         <input type="password" id="pass" class="input-text" placeholder="Contraseña">
-        <button class="btn" onclick="login()">Entrar al Panel</button>
-        <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">La sesión se cerrará al cerrar la pestaña.</p>
+        <button class="btn" onclick="login()">Acceder como Administrador</button>
     </div>
 
     <div id="adminPanel" class="admin-panel">
-        <p style="margin-top: 0; color: #ffb74d;"><b>🔓 MODO ADMINISTRADOR</b></p>
-        <button class="btn" onclick="saltarTurno()">MARCAR COMO REALIZADO</button>
-        <button class="btn btn-danger" onclick="resetearTodo()">⚠️ RESETEAR TODO EL SISTEMA</button>
-        <button class="btn" style="background: #666; margin-top: 15px;" onclick="logout()">Cerrar Sesión Ahora</button>
-    </div>
+        <p><b>⚙️ GESTIÓN AVANZADA</b></p>
+        <button class="btn" onclick="confirmarTurno()">✅ MARCAR COMO REALIZADO</button>
+        <button class="btn" style="background:#607d8b" onclick="saltarPareja()">⏭️ SALTAR PAREJA (PENDIENTE)</button>
+        
+        <div style="margin-top:15px; border-top:1px solid #ffb74d; padding-top:10px;">
+            <input type="text" id="nuevoAprendiz" class="input-text" placeholder="Nombre completo">
+            <button class="btn btn-small" onclick="agregarAprendiz()">Añadir Aprendiz</button>
+        </div>
 
-    <div id="status" class="auth-status">Estado: Invitado</div>
+        <button class="btn btn-danger" onclick="resetearSistema()">🔥 REINICIAR TODO EL SISTEMA</button>
+        <button class="btn" style="background:#666" onclick="logout()">Cerrar Sesión</button>
+    </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyCsPnOjs3A8-7M8W75HyWwdHvgHTLlfhQA",
         authDomain: "aseo-adso.firebaseapp.com",
@@ -215,100 +116,160 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-
-    const APRENDICES = ["OSCAR SUAREZ", "NICOLAS GIL", "OSCAR PEDRAZA", "NICOLAS OCAMPO", "JUAN DIEGO HERNANDEZ", "FABIAN SANCHEZ", "BRAYAN ROPERO", "JUAN SEBASTIAN CELIS", "JOSE LUIS SALCEDO", "DIEGO ALEJANDRO AMADO", "JHERXYN VARGAS", "WILSON DANIEL CORENA", "JOSE LUIS CORVACHO", "ALVARO SIMON PRADA"];
-
-    function actualizarReloj() {
-        const ahora = new Date();
-        const opcionesFecha = { weekday: 'short', day: '2-digit', month: 'short' };
-        const opcionesHora = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-        document.getElementById('fechaActual').innerText = ahora.toLocaleDateString('es-CO', opcionesFecha).toUpperCase();
-        document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-CO', opcionesHora);
-    }
-    setInterval(actualizarReloj, 1000);
-
-    function toggleTheme() {
-        const body = document.body;
-        const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        body.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        document.getElementById('themeBtn').innerText = newTheme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
-    }
-    if(localStorage.getItem('theme') === 'dark') {
-        document.body.setAttribute('data-theme', 'dark');
-        document.getElementById('themeBtn').innerText = '☀️ Modo Claro';
-    }
-
     auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
-    auth.onAuthStateChanged((user) => {
-        const loginForm = document.getElementById('loginForm');
-        const adminPanel = document.getElementById('adminPanel');
-        const status = document.getElementById('status');
-        if (user) {
-            loginForm.style.display = 'none';
-            adminPanel.style.display = 'block';
-            status.innerText = "Monitor: " + user.email;
-        } else {
-            loginForm.style.display = 'block';
-            adminPanel.style.display = 'none';
-            status.innerText = "Estado: Invitado (Solo lectura)";
-        }
-    });
+    // --- RELOJ ---
+    setInterval(() => {
+        const ahora = new Date();
+        document.getElementById('fechaActual').innerText = ahora.toLocaleDateString('es-CO', {weekday:'short', day:'2-digit', month:'short'}).toUpperCase();
+        document.getElementById('reloj').innerText = ahora.toLocaleTimeString('es-CO');
+    }, 1000);
 
+    // --- TEMAS ---
+    function toggleTheme() {
+        const theme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        document.getElementById('themeBtn').innerText = theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+    }
+    if(localStorage.getItem('theme') === 'dark') { toggleTheme(); }
+
+    // --- AUTH ---
     function login() {
-        const email = document.getElementById('email').value;
-        const pass = document.getElementById('pass').value;
-        if(!email || !pass) return alert("Por favor, ingresa tus credenciales.");
-        auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error de acceso: " + e.message));
+        auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
+            .catch(e => alert("Error: " + e.message));
     }
-
-    function logout() {
-        if(confirm("¿Cerrar sesión de monitor?")) auth.signOut();
-    }
-
-    db.ref('control_aseo').on('value', (snap) => {
-        const data = snap.val() || { index: 0, historial: {} };
-        document.getElementById('p1').innerText = APRENDICES[data.index % APRENDICES.length];
-        document.getElementById('p2').innerText = APRENDICES[(data.index + 1) % APRENDICES.length];
-        const list = document.getElementById('listaHistorial');
-        list.innerHTML = "";
-        const entries = Object.values(data.historial || {});
-        if(entries.length === 0) {
-            list.innerHTML = "<p style='padding:10px; color:gray; font-size:0.8rem;'>Sin historial.</p>";
-        } else {
-            entries.reverse().forEach(item => {
-                list.innerHTML += `<div class="historial-item">✅ <b>${item.fecha}:</b> ${item.encargados}</div>`;
-            });
-        }
+    function logout() { auth.signOut(); }
+    auth.onAuthStateChanged(user => {
+        document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
+        document.getElementById('loginForm').style.display = user ? 'none' : 'block';
     });
 
-    function saltarTurno() {
-        const p1 = document.getElementById('p1').innerText;
-        const p2 = document.getElementById('p2').innerText;
-        const confirmar = confirm(`¿Confirmas que ${p1} y ${p2} realizaron el aseo?\n\nAl aceptar, se guardará el registro y la lista avanzará.`);
-        if (confirmar) {
-            db.ref('control_aseo').once('value', (snap) => {
-                let idx = snap.val()?.index || 0;
-                db.ref('control_aseo/index').set((idx + 2) % APRENDICES.length);
-                db.ref('control_aseo/historial').push({
-                    fecha: new Date().toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'}),
-                    encargados: `${p1} Y ${p2}`
-                });
-                alert("Registro completado.");
+    // --- LÓGICA DE NEGOCIO ---
+    db.ref('sistema_aseo').on('value', snap => {
+        const data = snap.val() || { aprendices: [], pendientes: [], historial: [] };
+        actualizarPantalla(data);
+    });
+
+    function actualizarPantalla(data) {
+        const lista = data.aprendices || [];
+        const pendientes = data.pendientes || [];
+        
+        // La pareja actual siempre son los dos primeros de la lista "aprendices"
+        document.getElementById('p1').innerText = lista[0] || "FIN";
+        document.getElementById('p2').innerText = lista[1] || "CICLO";
+
+        // Proyección
+        const tbody = document.getElementById('tablaProyeccion');
+        tbody.innerHTML = "";
+        
+        // Primero mostrar pendientes (si existen)
+        pendientes.forEach(p => {
+            tbody.innerHTML += `<tr style="color:var(--danger)"><td>${p}</td><td>⚠️ PENDIENTE</td></tr>`;
+        });
+        
+        // Mostrar resto de la lista (después de los 2 actuales)
+        lista.slice(2).forEach(p => {
+            tbody.innerHTML += `<tr><td>${p}</td><td>Próximamente</td></tr>`;
+        });
+
+        // Historial
+        const histTable = document.getElementById('tablaHistorial');
+        histTable.innerHTML = "<thead><tr><th>Fecha</th><th>Aprendices</th></tr></thead>";
+        if(data.historial) {
+            Object.values(data.historial).reverse().forEach(h => {
+                histTable.innerHTML += `<tr><td>${h.fecha}</td><td>${h.nombres}</td></tr>`;
             });
         }
     }
 
-    function resetearTodo() {
-        const warning = confirm("⚠️ ¡ATENCIÓN!\n\nEstás a punto de borrar todo el historial y reiniciar la lista de aprendices.\n\n¿Deseas continuar?");
-        if (warning) {
-            const finalCheck = confirm("❓ ¿Estás TOTALMENTE seguro?\n\nEsta acción es irreversible.");
-            if (finalCheck) {
-                db.ref('control_aseo').set({ index: 0, historial: {} })
-                .then(() => alert("Sistema reiniciado a valores iniciales."))
-                .catch(e => alert("Error: " + e.message));
-            }
+    function confirmarTurno() {
+        const n1 = document.getElementById('p1').innerText;
+        const n2 = document.getElementById('p2').innerText;
+        if(n1 === "FIN") return alert("No hay aprendices en lista");
+
+        if(confirm(`¿Confirmar que ${n1} y ${n2} hicieron el aseo?`)) {
+            db.ref('sistema_aseo').once('value', snap => {
+                const data = snap.val();
+                let lista = data.aprendices;
+                let pendientes = data.pendientes || [];
+
+                // 1. Guardar historial
+                db.ref('sistema_aseo/historial').push({
+                    fecha: new Date().toLocaleDateString('es-CO'),
+                    nombres: `${n1} y ${n2}`
+                });
+
+                // 2. Eliminar del frente de la lista
+                lista.splice(0, 2);
+
+                // 3. Si la lista se vacía, REINICIAR CICLO CON PAREJAS NUEVAS
+                if(lista.length <= 1) {
+                    alert("¡Ciclo completado! Generando nuevas parejas mezcladas...");
+                    lista = mezclarParejas(data.base_aprendices);
+                }
+
+                db.ref('sistema_aseo/aprendices').set(lista);
+            });
+        }
+    }
+
+    function saltarPareja() {
+        const n1 = document.getElementById('p1').innerText;
+        const n2 = document.getElementById('p2').innerText;
+
+        if(confirm(`¿Saltar a ${n1} y ${n2}? Se marcarán como pendientes para el próximo turno.`)) {
+            db.ref('sistema_aseo').once('value', snap => {
+                const data = snap.val();
+                let lista = data.aprendices;
+                let pendientes = data.pendientes || [];
+
+                // Los quitamos de la lista actual
+                const saltados = lista.splice(0, 2);
+                
+                // Los añadimos a pendientes para que no se escapen
+                pendientes.push(...saltados);
+
+                db.ref('sistema_aseo').update({
+                    aprendices: lista,
+                    pendientes: pendientes
+                });
+            });
+        }
+    }
+
+    function agregarAprendiz() {
+        const nombre = document.getElementById('nuevoAprendiz').value.toUpperCase();
+        if(!nombre) return;
+        
+        db.ref('sistema_aseo/base_aprendices').once('value', snap => {
+            const base = snap.val() || [];
+            base.push(nombre);
+            db.ref('sistema_aseo/base_aprendices').set(base);
+            alert("Aprendiz añadido a la base de datos.");
+        });
+    }
+
+    function mezclarParejas(array) {
+        let copia = [...array];
+        for (let i = copia.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copia[i], copia[j]] = [copia[j], copia[i]];
+        }
+        return copia;
+    }
+
+    function resetearSistema() {
+        if(confirm("¿RESET TOTAL? Se borrará historial y se usará la lista de aprendices actual para un ciclo nuevo.")) {
+            db.ref('sistema_aseo/base_aprendices').once('value', snap => {
+                const base = snap.val();
+                db.ref('sistema_aseo').set({
+                    base_aprendices: base,
+                    aprendices: mezclarParejas(base),
+                    pendientes: [],
+                    historial: {}
+                });
+            });
         }
     }
 </script>
