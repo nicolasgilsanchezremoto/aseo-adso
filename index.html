@@ -68,6 +68,10 @@
         td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
 
         .admin-panel { background: rgba(255,183,77,0.1); border: 2px solid #ffb74d; padding: 15px; border-radius: 15px; display: none; margin-top: 20px; }
+        
+        /* Panel específico para Nicolas Gil */
+        #gestionBaseDatos { display: none; margin-top: 20px; border-top: 2px dashed var(--sena); padding-top: 15px; }
+
         .btn { background: var(--dark-blue); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; transition: 0.2s; }
         .btn:active { transform: scale(0.98); }
         .btn-danger { background: var(--danger); font-size: 0.7rem; }
@@ -75,16 +79,12 @@
         
         .input-text { width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-main); text-align: center; }
         .theme-btn { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid var(--sena); color: var(--sena); border-radius: 20px; padding: 5px 10px; cursor: pointer; font-size: 0.7rem; }
-        
-        /* Panel Exclusivo Nicolas */
-        #nicolasPanel { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--sena); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Modo Oscuro</button>
-    
     <div class="credits">Software desarrollado por Nicolas Gil Sanchez</div>
     
     <div class="header">
@@ -106,7 +106,7 @@
         <div id="p2" class="aprendiz-card">---</div>
     </div>
 
-    <div class="section-title">🔮 PRONÓSTICO DEL CICLO (Orden de Turnos)</div>
+    <div class="section-title">🔮 PRONÓSTICO DEL CICLO</div>
     <div class="scroll-table">
         <table>
             <thead><tr><th>Día Hábil</th><th>Aprendices Encargados</th></tr></thead>
@@ -119,22 +119,24 @@
         <table id="tablaHistorial"></table>
     </div>
 
+    <!-- Formulario Login -->
     <div id="loginForm" style="margin-top:20px; border-top: 1px solid var(--border); padding-top: 20px;">
         <input type="email" id="email" class="input-text" placeholder="Email Monitor">
         <input type="password" id="pass" class="input-text" placeholder="Contraseña">
         <button class="btn" onclick="login()">Acceder al Panel</button>
     </div>
 
+    <!-- Panel Admin General (Visible para Jherxyn y Nicolas) -->
     <div id="adminPanel" class="admin-panel">
-        <p style="color: #ffb74d; margin-bottom: 10px;"><b>🔓 PANEL DE CONTROL</b></p>
+        <p style="color: #ffb74d; margin: 0 0 10px 0;"><b>🔓 PANEL DE CONTROL</b></p>
         <button class="btn" onclick="marcarRealizado()">✅ CONFIRMAR ASEO REALIZADO</button>
         <button class="btn" style="background:#607d8b" onclick="saltarPareja()">⏭️ SALTAR PAREJA</button>
 
-        <!-- PANEL EXCLUSIVO NICOLAS GIL SANCHEZ -->
-        <div id="nicolasPanel">
-            <div class="section-title">👥 GESTIÓN DE BASE DE DATOS (EXCLUSIVO NICOLAS)</div>
-            <input type="text" id="nuevoNombre" class="input-text" placeholder="Nombre completo del aprendiz">
-            <button class="btn" style="background: var(--sena); margin-bottom: 10px;" onclick="agregarAprendiz()">➕ AÑADIR APRENDIZ</button>
+        <!-- PANEL DE GESTIÓN (SOLO VISIBLE PARA NICOLAS) -->
+        <div id="gestionBaseDatos">
+            <div class="section-title">👥 GESTIÓN DE BASE DE DATOS (EXCLUSIVO)</div>
+            <input type="text" id="nuevoNombre" class="input-text" placeholder="Nombre del nuevo aprendiz">
+            <button class="btn" style="background: var(--sena); margin-bottom: 15px;" onclick="agregarAprendiz()">➕ AÑADIR APRENDIZ</button>
             
             <div class="scroll-table">
                 <table>
@@ -142,7 +144,8 @@
                     <tbody id="listaGestion"></tbody>
                 </table>
             </div>
-            <button class="btn btn-danger" style="margin-top: 15px;" onclick="resetearTodo()">⚠️ RESET TOTAL DEL SISTEMA</button>
+            
+            <button class="btn btn-danger" style="margin-top: 20px;" onclick="resetearTodo()">⚠️ RESET TOTAL DEL SISTEMA</button>
         </div>
 
         <button class="btn" style="background:#666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
@@ -165,6 +168,7 @@
     const auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
+    // Reloj con Año
     setInterval(() => {
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
@@ -183,12 +187,27 @@
     function login() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value).catch(e => alert(e.message)); }
     function logout() { auth.signOut(); }
     
+    // CONTROL DE VISIBILIDAD POR CORREO
     auth.onAuthStateChanged(user => {
-        const isAdmin = user ? user.email === 'nicolasgilsanchezremoto@gmail.com' : false;
-        document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
-        document.getElementById('loginForm').style.display = user ? 'none' : 'block';
-        // Mostrar panel de Nicolas solo si el correo coincide
-        document.getElementById('nicolasPanel').style.display = isAdmin ? 'block' : 'none';
+        const adminPanel = document.getElementById('adminPanel');
+        const loginForm = document.getElementById('loginForm');
+        const gestionDB = document.getElementById('gestionBaseDatos');
+
+        if (user) {
+            adminPanel.style.display = 'block';
+            loginForm.style.display = 'none';
+
+            // FILTRO CRÍTICO: Solo Nicolas Gil Sanchez puede ver la gestión de la base
+            if (user.email === "nicolasgilsanchezremoto@gmail.com") {
+                gestionDB.style.display = 'block';
+            } else {
+                gestionDB.style.display = 'none';
+            }
+        } else {
+            adminPanel.style.display = 'none';
+            loginForm.style.display = 'block';
+            gestionDB.style.display = 'none';
+        }
     });
 
     db.ref('sistema_aseo').on('value', snap => {
@@ -202,11 +221,13 @@
         document.getElementById('p1').innerText = lista[0] || "---";
         document.getElementById('p2').innerText = lista[1] || "---";
 
+        // Pronóstico
         const pronBody = document.getElementById('tablaPronostico'); pronBody.innerHTML = "";
         for(let i = 2; i < lista.length; i += 2) {
             pronBody.innerHTML += `<tr><td>Día +${i/2}</td><td>${lista[i]} y ${lista[i+1] || "(Solo)"}</td></tr>`;
         }
 
+        // Historial
         const histTable = document.getElementById('tablaHistorial');
         histTable.innerHTML = "<thead><tr><th>Fecha</th><th>Realizado por</th></tr></thead>";
         if(data.historial) {
@@ -215,6 +236,7 @@
             });
         }
 
+        // Gestión Base de Datos (Solo Nicolas la verá cargada)
         const gestionBody = document.getElementById('listaGestion'); gestionBody.innerHTML = "";
         base.forEach((nom, index) => {
             gestionBody.innerHTML += `<tr><td>${nom}</td><td><button class="btn btn-action btn-danger" onclick="eliminarAprendiz(${index}, '${nom}')">Borrar</button></td></tr>`;
@@ -228,14 +250,16 @@
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 let base = snap.val() || [];
                 base.push(nombre);
-                db.ref('sistema_aseo/base_aprendices').set(base);
-                document.getElementById('nuevoNombre').value = "";
+                db.ref('sistema_aseo/base_aprendices').set(base).then(() => {
+                    document.getElementById('nuevoNombre').value = "";
+                    alert("Añadido con éxito.");
+                });
             });
         }
     }
 
     function eliminarAprendiz(index, nombre) {
-        if(confirm(`¿Eliminar a ${nombre} definitivamente?`)) {
+        if(confirm(`¿Eliminar a ${nombre}?\nYa no aparecerá en futuros ciclos.`)) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 let base = snap.val();
                 base.splice(index, 1);
@@ -248,7 +272,7 @@
         const n1 = document.getElementById('p1').innerText;
         const n2 = document.getElementById('p2').innerText;
         if(n1 === "---") return;
-        if(confirm(`¿Confirmar que ${n1} y ${n2} hicieron el aseo?`)) {
+        if(confirm(`¿Confirmar que ${n1} y ${n2} realizaron el aseo?`)) {
             db.ref('sistema_aseo').once('value', snap => {
                 const data = snap.val();
                 let lista = data.aprendices_en_ciclo;
@@ -270,7 +294,7 @@
     }
 
     function saltarPareja() {
-        if(confirm("¿Saltar esta pareja?")) {
+        if(confirm("¿Saltar pareja?\nIrán al final del ciclo.")) {
             db.ref('sistema_aseo').once('value', snap => {
                 let lista = snap.val().aprendices_en_ciclo;
                 const saltados = lista.splice(0, 2);
@@ -289,7 +313,7 @@
     }
 
     function resetearTodo() {
-        if(confirm("⚠️ RESET TOTAL: Se borrará el historial y se reiniciará el ciclo.")) {
+        if(confirm("⚠️ ¿RESET TOTAL DEL SISTEMA?")) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 const base = snap.val();
                 db.ref('sistema_aseo').set({ 
