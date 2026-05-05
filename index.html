@@ -29,10 +29,9 @@
             text-align: center; position: relative; 
         }
 
-        /* Créditos de Autoría solicitados */
         .credits {
             font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;
-            letter-spacing: 1px; margin-bottom: 8px; font-style: italic; opacity: 0.9;
+            letter-spacing: 1px; margin-bottom: 8px; font-style: italic; opacity: 0.8;
         }
 
         .header { border-bottom: 3px solid var(--sena); margin-bottom: 15px; padding-bottom: 10px; }
@@ -56,7 +55,6 @@
             background: var(--sena); color: white; padding: 15px; border-radius: 12px; 
             flex: 1; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; 
             display: flex; align-items: center; justify-content: center; min-height: 50px;
-            box-shadow: 0 4px 10px rgba(57, 169, 0, 0.2);
         }
 
         .section-title { 
@@ -77,6 +75,9 @@
         
         .input-text { width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-main); text-align: center; }
         .theme-btn { position: absolute; top: 10px; right: 10px; background: none; border: 1px solid var(--sena); color: var(--sena); border-radius: 20px; padding: 5px 10px; cursor: pointer; font-size: 0.7rem; }
+        
+        /* Panel Exclusivo Nicolas */
+        #nicolasPanel { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed var(--sena); }
     </style>
 </head>
 <body>
@@ -91,7 +92,6 @@
         <p style="color: var(--sena); font-weight: bold; margin:0; font-size: 1.2rem;">ADSO 2026-2028</p>
     </div>
 
-    <!-- Reloj Actualizado -->
     <div class="time-box" id="relojFull">---</div>
 
     <div class="status-bar">
@@ -125,24 +125,26 @@
         <button class="btn" onclick="login()">Acceder al Panel</button>
     </div>
 
-    <!-- Panel para Nicolas Gil (Admin) -->
     <div id="adminPanel" class="admin-panel">
         <p style="color: #ffb74d; margin-bottom: 10px;"><b>🔓 PANEL DE CONTROL</b></p>
         <button class="btn" onclick="marcarRealizado()">✅ CONFIRMAR ASEO REALIZADO</button>
         <button class="btn" style="background:#607d8b" onclick="saltarPareja()">⏭️ SALTAR PAREJA</button>
 
-        <div class="section-title">👥 GESTIÓN DE BASE DE DATOS (Solo Nicolas)</div>
-        <input type="text" id="nuevoNombre" class="input-text" placeholder="Nombre del nuevo aprendiz">
-        <button class="btn" style="background: var(--sena); margin-bottom: 15px;" onclick="agregarAprendiz()">➕ AÑADIR A LA BASE</button>
-        
-        <div class="scroll-table">
-            <table>
-                <thead><tr><th>Nombre</th><th>Acción</th></tr></thead>
-                <tbody id="listaGestion"></tbody>
-            </table>
+        <!-- PANEL EXCLUSIVO NICOLAS GIL SANCHEZ -->
+        <div id="nicolasPanel">
+            <div class="section-title">👥 GESTIÓN DE BASE DE DATOS (EXCLUSIVO NICOLAS)</div>
+            <input type="text" id="nuevoNombre" class="input-text" placeholder="Nombre completo del aprendiz">
+            <button class="btn" style="background: var(--sena); margin-bottom: 10px;" onclick="agregarAprendiz()">➕ AÑADIR APRENDIZ</button>
+            
+            <div class="scroll-table">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Acción</th></tr></thead>
+                    <tbody id="listaGestion"></tbody>
+                </table>
+            </div>
+            <button class="btn btn-danger" style="margin-top: 15px;" onclick="resetearTodo()">⚠️ RESET TOTAL DEL SISTEMA</button>
         </div>
 
-        <button class="btn btn-danger" style="margin-top: 20px;" onclick="resetearTodo()">⚠️ RESET TOTAL DEL SISTEMA</button>
         <button class="btn" style="background:#666; margin-top: 15px;" onclick="logout()">Cerrar Sesión</button>
     </div>
 </div>
@@ -163,7 +165,6 @@
     const auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
-    // Reloj dinámico con año
     setInterval(() => {
         const ahora = new Date();
         const fecha = ahora.toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
@@ -183,11 +184,13 @@
     function logout() { auth.signOut(); }
     
     auth.onAuthStateChanged(user => {
+        const isAdmin = user ? user.email === 'nicolasgilsanchezremoto@gmail.com' : false;
         document.getElementById('adminPanel').style.display = user ? 'block' : 'none';
         document.getElementById('loginForm').style.display = user ? 'none' : 'block';
+        // Mostrar panel de Nicolas solo si el correo coincide
+        document.getElementById('nicolasPanel').style.display = isAdmin ? 'block' : 'none';
     });
 
-    // Carga de datos
     db.ref('sistema_aseo').on('value', snap => {
         const data = snap.val(); if(!data) return;
         const lista = data.aprendices_en_ciclo || [];
@@ -199,13 +202,11 @@
         document.getElementById('p1').innerText = lista[0] || "---";
         document.getElementById('p2').innerText = lista[1] || "---";
 
-        // Tabla Pronóstico
         const pronBody = document.getElementById('tablaPronostico'); pronBody.innerHTML = "";
         for(let i = 2; i < lista.length; i += 2) {
             pronBody.innerHTML += `<tr><td>Día +${i/2}</td><td>${lista[i]} y ${lista[i+1] || "(Solo)"}</td></tr>`;
         }
 
-        // Historial
         const histTable = document.getElementById('tablaHistorial');
         histTable.innerHTML = "<thead><tr><th>Fecha</th><th>Realizado por</th></tr></thead>";
         if(data.historial) {
@@ -214,30 +215,27 @@
             });
         }
 
-        // Tabla Gestión (Borrado)
         const gestionBody = document.getElementById('listaGestion'); gestionBody.innerHTML = "";
         base.forEach((nom, index) => {
             gestionBody.innerHTML += `<tr><td>${nom}</td><td><button class="btn btn-action btn-danger" onclick="eliminarAprendiz(${index}, '${nom}')">Borrar</button></td></tr>`;
         });
     });
 
-    // Gestión de Base de Datos
     function agregarAprendiz() {
         const nombre = document.getElementById('nuevoNombre').value.toUpperCase().trim();
-        if(!nombre) return alert("Ingresa un nombre.");
-        if(confirm(`¿Añadir a ${nombre} a la base de datos?`)) {
+        if(!nombre) return alert("Escribe un nombre.");
+        if(confirm(`¿Añadir a ${nombre} a la base de datos oficial?`)) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 let base = snap.val() || [];
                 base.push(nombre);
-                db.ref('sistema_aseo/base_aprendices').set(base).then(() => {
-                    document.getElementById('nuevoNombre').value = "";
-                });
+                db.ref('sistema_aseo/base_aprendices').set(base);
+                document.getElementById('nuevoNombre').value = "";
             });
         }
     }
 
     function eliminarAprendiz(index, nombre) {
-        if(confirm(`¿Estás seguro de eliminar a ${nombre}?\nNo aparecerá en el sorteo del próximo ciclo.`)) {
+        if(confirm(`¿Eliminar a ${nombre} definitivamente?`)) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 let base = snap.val();
                 base.splice(index, 1);
@@ -250,7 +248,7 @@
         const n1 = document.getElementById('p1').innerText;
         const n2 = document.getElementById('p2').innerText;
         if(n1 === "---") return;
-        if(confirm(`¿Confirmar que ${n1} y ${n2} realizaron el aseo?`)) {
+        if(confirm(`¿Confirmar que ${n1} y ${n2} hicieron el aseo?`)) {
             db.ref('sistema_aseo').once('value', snap => {
                 const data = snap.val();
                 let lista = data.aprendices_en_ciclo;
@@ -272,7 +270,7 @@
     }
 
     function saltarPareja() {
-        if(confirm("¿Saltar esta pareja?\nSe moverán al final de la lista del ciclo actual.")) {
+        if(confirm("¿Saltar esta pareja?")) {
             db.ref('sistema_aseo').once('value', snap => {
                 let lista = snap.val().aprendices_en_ciclo;
                 const saltados = lista.splice(0, 2);
@@ -291,7 +289,7 @@
     }
 
     function resetearTodo() {
-        if(confirm("⚠️ ¿RESET TOTAL?\nSe borrará historial y se reiniciará el ciclo actual.")) {
+        if(confirm("⚠️ RESET TOTAL: Se borrará el historial y se reiniciará el ciclo.")) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
                 const base = snap.val();
                 db.ref('sistema_aseo').set({ 
