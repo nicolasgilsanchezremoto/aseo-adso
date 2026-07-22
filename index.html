@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aseo ADSO 3312447 - By Nicolas Gil</title>
+    <title>Aseo ADSO - Nicolas Gil Sanchez</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
@@ -143,7 +143,6 @@
         if(user) {
             adminPanel.style.display = 'block';
             loginForm.style.display = 'none';
-            // Solo Nicolas Gil ve la gestión de la base de datos
             masterControls.style.display = (user.email === "nicolasgilsanchezremoto@gmail.com") ? 'block' : 'none';
         } else {
             adminPanel.style.display = 'none';
@@ -151,7 +150,14 @@
         }
     });
 
-    // Función auxiliar para agrupar elementos de la lista evitando dejas a 1 solo al final
+    // Convierte respuestas de Firebase (objetos o arrays con huecos) a arreglos limpios de JS
+    function sanitizarLista(data) {
+        if (!data) return [];
+        if (Array.isArray(data)) return data.filter(item => item !== null && item !== undefined && item !== "");
+        return Object.values(data).filter(item => item !== null && item !== undefined && item !== "");
+    }
+
+    // Agrupa evitando que alguien quede solo
     function agruparTurnos(listaOriginal) {
         let lista = [...listaOriginal];
         let turnos = [];
@@ -161,7 +167,6 @@
             } else if (lista.length >= 2) {
                 turnos.push(lista.splice(0, 2));
             } else {
-                // En caso de que quede 1 solo por algún imprevisto, se une al último grupo
                 if (turnos.length > 0) {
                     turnos[turnos.length - 1].push(lista.pop());
                 } else {
@@ -174,8 +179,8 @@
 
     db.ref('sistema_aseo').on('value', snap => {
         const data = snap.val(); if(!data) return;
-        const lista = data.aprendices_en_ciclo || [];
-        const base = data.base_aprendices || [];
+        const lista = sanitizarLista(data.aprendices_en_ciclo);
+        const base = sanitizarLista(data.base_aprendices);
 
         const turnos = agruparTurnos(lista);
 
@@ -225,7 +230,9 @@
     function marcarRealizado() {
         db.ref('sistema_aseo').once('value', snap => {
             const data = snap.val();
-            let lista = data.aprendices_en_ciclo || [];
+            let lista = sanitizarLista(data.aprendices_en_ciclo);
+            let base = sanitizarLista(data.base_aprendices);
+
             if (lista.length === 0) return;
 
             const tamanoTurno = obtenerTamanoTurnoActual(lista);
@@ -242,7 +249,8 @@
 
                 if(lista.length === 0) {
                     db.ref('sistema_aseo').update({ 
-                        aprendices_en_ciclo: shuffle([...data.base_aprendices]), 
+                        base_aprendices: base,
+                        aprendices_en_ciclo: shuffle([...base]), 
                         num_ciclo: (data.num_ciclo || 1) + 1 
                     });
                 } else {
@@ -254,7 +262,7 @@
 
     function saltarPareja() {
         db.ref('sistema_aseo/aprendices_en_ciclo').once('value', snap => {
-            let lista = snap.val() || [];
+            let lista = sanitizarLista(snap.val());
             if (lista.length === 0) return;
 
             const tamanoTurno = obtenerTamanoTurnoActual(lista);
@@ -271,7 +279,7 @@
         const nombre = document.getElementById('nuevoNombre').value.toUpperCase().trim();
         if(!nombre) return;
         db.ref('sistema_aseo/base_aprendices').once('value', snap => {
-            let base = snap.val() || [];
+            let base = sanitizarLista(snap.val());
             base.push(nombre);
             db.ref('sistema_aseo/base_aprendices').set(base).then(() => {
                 document.getElementById('nuevoNombre').value = "";
@@ -282,7 +290,7 @@
     function eliminarAprendiz(index) {
         if(confirm("¿Eliminar aprendiz de la base de datos?")) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
-                let base = snap.val();
+                let base = sanitizarLista(snap.val());
                 base.splice(index, 1);
                 db.ref('sistema_aseo/base_aprendices').set(base);
             });
@@ -294,7 +302,7 @@
     function resetearTodo() {
         if(confirm("⚠️ ¿RESET TOTAL?")) {
             db.ref('sistema_aseo/base_aprendices').once('value', snap => {
-                const base = snap.val();
+                const base = sanitizarLista(snap.val());
                 db.ref('sistema_aseo').set({ base_aprendices: base, aprendices_en_ciclo: [...base], num_ciclo: 1, historial: {} });
             });
         }
